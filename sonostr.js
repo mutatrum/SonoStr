@@ -1,15 +1,11 @@
 const { Relay, RelayPool, signId, calculateId, getPublicKey } = require('nostr')
-const { bech32 } = require('bech32')    
 const { Sonos, DeviceDiscovery } = require('sonos')
-const buffer = require('buffer')
 const jimp = require('jimp')
+const framebuffer = require('framebuffer');
 
 require('dotenv').config();
 
-const WIDTH = 720;
-const HEIGHT = 720;
-
-var fbpbuffer, fb;
+var buffer, fb;
 
 (async () => {
 
@@ -18,7 +14,6 @@ var fbpbuffer, fb;
   try {
   
     const pubkey = getPublicKey(process.env.PRIVATE_KEY)
-    const npub = pubkeytonpub(pubkey)
 
     var relayPool = null
     
@@ -94,7 +89,7 @@ var fbpbuffer, fb;
             sonos.on('PlayState', playState => {
               if (playState == 'playing') {
                 fb.blank(false)
-                fbpbuffer.fill(0)
+                buffer.fill(0)
                 displayAlbumArt()
               } else {
                 console.log('Stopped')
@@ -147,9 +142,9 @@ var fbpbuffer, fb;
         this.bitmap.data[idx2] = t
       });
     
-      image.contain(720, 720)
+      image.contain(fb.xres, fb.yres)
     
-      fbpbuffer.set(new Uint32Array(image.bitmap.data.buffer));
+      buffer.set(new Uint32Array(image.bitmap.data.buffer));
     }
     
 
@@ -159,22 +154,15 @@ var fbpbuffer, fb;
 })();
 
 function initFramebuffer() {
-  const framebuffer = require('framebuffer');
   fb = new framebuffer('/dev/fb0');
   console.log(fb.toString());
 
-  fbpbuffer = new Uint32Array(fb.fbp.buffer);
+  buffer = new Uint32Array(fb.fbp.buffer);
 
   fb.blank(false);
-  fbpbuffer.fill(0);
+  buffer.fill(0);
 }
 
 function unixTimestampSec() {
   return Math.floor(new Date().getTime() / 1000)
 }
-
-function pubkeytonpub(pubkey) {
-  let words = bech32.toWords( buffer.Buffer.from( pubkey, 'hex' ) );
-  return bech32.encode( "npub", words );
-}  
-

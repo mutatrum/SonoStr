@@ -9,7 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bech32": "^2.0.0",
     "dotenv": "^16.3.1",
     "jimp": "^0.22.10",
     "framebuffer": "^1.0.0",    
