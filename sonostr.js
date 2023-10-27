@@ -2,10 +2,19 @@ const { Relay, RelayPool, signId, calculateId, getPublicKey } = require('nostr')
 const { bech32 } = require('bech32')    
 const { Sonos, DeviceDiscovery } = require('sonos')
 const buffer = require('buffer')
+const jimp = require('jimp')
 
 require('dotenv').config();
 
+const WIDTH = 720;
+const HEIGHT = 720;
+
+var fbpbuffer, fb;
+
 (async () => {
+
+  initFramebuffer();
+
   try {
   
     const pubkey = getPublicKey(process.env.PRIVATE_KEY)
@@ -47,6 +56,7 @@ require('dotenv').config();
     var expiration = 0
     var duration = 0
     var content = null
+    var albumArtUri = null
 
     DeviceDiscovery().once('DeviceAvailable', (device) => {
   
@@ -58,12 +68,14 @@ require('dotenv').config();
             console.log(`Listening on Sonos group ${group.Name}`)
   
             const sonos = new Sonos(group.host)
+
             sonos.on('CurrentTrack', track => {
               if (track.title != null && track.title.startsWith('ZPSTR_')) return
 
               var previousContent = content;
               content = track.artist ? `${track.artist} - ${track.title}` : track.title
 
+              if (content === null) return
               // Radio Paradise intermission track
               if (content === 'Commercial-free - Listener-supported') return
 
@@ -71,6 +83,20 @@ require('dotenv').config();
                 console.log(`Now playing: ${content}`)
                 expiration = 0
                 duration = track.duration || 120
+                albumArtUri = track.albumArtURI
+
+                displayAlbumArt()
+              }
+            })
+
+            sonos.on('PlayState', playState => {
+              if (playState == 'playing') {
+                fb.blank(false)
+                fbpbuffer.fill(0)
+                displayAlbumArt()
+              } else {
+                console.log('Stopped')
+                fb.blank(true)
               }
             })
           }
@@ -107,10 +133,38 @@ require('dotenv').config();
       });
     }
 
+    async function displayAlbumArt() {
+      if (albumArtUri == null) return
+    
+      const image = await jimp.read(albumArtUri)
+    
+      image.scan(0, 0, image.bitmap.width, image.bitmap.height, function (x, y, idx) {
+        var t = this.bitmap.data[idx + 0]
+        this.bitmap.data[idx + 0] = this.bitmap.data[idx + 2]
+        this.bitmap.data[idx + 2] = t
+      });
+    
+      image.contain(720, 720)
+    
+      fbpbuffer.set(new Uint32Array(image.bitmap.data.buffer));
+    }
+    
+
   } catch (error) {
-    console.log(error)  
+    console.log(error)
   }
 })();
+
+function initFramebuffer() {
+  const framebuffer = require('framebuffer');
+  fb = new framebuffer('/dev/fb0');
+  console.log(fb.toString());
+
+  fbpbuffer = new Uint32Array(fb.fbp.buffer);
+
+  fb.blank(false);
+  fbpbuffer.fill(0);
+}
 
 function unixTimestampSec() {
   return Math.floor(new Date().getTime() / 1000)
