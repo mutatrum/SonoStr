@@ -83,9 +83,11 @@ var fbpbuffer, fb;
                 console.log(`Now playing: ${content}`)
                 expiration = 0
                 duration = track.duration || 120
-                albumArtUri = track.albumArtURI
 
-                displayAlbumArt()
+                if (track.albumArtURI != albumArtUri) {
+                  albumArtUri = track.albumArtURI
+                  displayAlbumArt()
+                }
               }
             })
 
@@ -139,9 +141,10 @@ var fbpbuffer, fb;
       const image = await jimp.read(albumArtUri)
     
       image.scan(0, 0, image.bitmap.width, image.bitmap.height, function (x, y, idx) {
-        var t = this.bitmap.data[idx + 0]
-        this.bitmap.data[idx + 0] = this.bitmap.data[idx + 2]
-        this.bitmap.data[idx + 2] = t
+        var idx2 = idx + 2
+        var t = this.bitmap.data[idx]
+        this.bitmap.data[idx] = this.bitmap.data[idx2]
+        this.bitmap.data[idx2] = t
       });
     
       image.contain(720, 720)
