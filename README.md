@@ -1,6 +1,6 @@
 # SonoStr
 
-Posting Sonos music to Nostr as User Status (NIP-315)
+Posting Sonos music to Nostr as User Status (NIP-315) and display album art on a Pimoroni HyperPixel 4.0 Square display.
 
 # usage
 
