@@ -67,14 +67,14 @@ var buffer, fb;
             sonos.on('CurrentTrack', track => {
               if (track.title != null && track.title.startsWith('ZPSTR_')) return
 
-              var previousContent = content;
-              content = track.artist ? `${track.artist} - ${track.title}` : track.title
+              var newContent = track.artist ? `${track.artist} - ${track.title}` : track.title
 
-              if (content === null) return
+              if (newContent === null) return
               // Radio Paradise intermission track
-              if (content === 'Commercial-free - Listener-supported') return
+              if (newContent === 'Commercial-free - Listener-supported') return
 
-              if (previousContent != content) {
+              if (content != newContent) {
+                content = newContent;
                 console.log(`Now playing: ${content}`)
                 expiration = 0
                 duration = track.duration || 120
